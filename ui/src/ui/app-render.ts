@@ -915,7 +915,6 @@ export function renderApp(state: AppViewState) {
                   },
                   onRefresh: async () => {
                     await loadAgents(state);
-                    await loadConfig(state);
                     const agentIds = state.agentsList?.agents?.map((entry) => entry.id) ?? [];
                     if (agentIds.length > 0) {
                       void loadAgentIdentities(state, agentIds);
@@ -925,9 +924,6 @@ export function renderApp(state: AppViewState) {
                       state.agentsList?.defaultId ??
                       state.agentsList?.agents?.[0]?.id ??
                       null;
-                    if (refreshedAgentId) {
-                      void loadAgentIdentity(state, refreshedAgentId);
-                    }
                     if (state.agentsPanel === "files" && refreshedAgentId) {
                       void loadAgentFiles(state, refreshedAgentId);
                     }

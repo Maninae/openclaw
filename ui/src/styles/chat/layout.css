@@ -16,8 +16,6 @@
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
 }
 
 /* Chat header - fixed at top, transparent */
