@@ -231,13 +231,11 @@ export function extractToolMediaArtifact(
     return undefined;
   }
   const record = result as Record<string, unknown>;
-  const raw =
-    normalizeMediaArtifact(record.media) ??
-    normalizeMediaArtifact(
-      record.details && typeof record.details === "object"
-        ? (record.details as Record<string, unknown>).media
-        : undefined,
-    );
+  const details =
+    record.details && typeof record.details === "object" && !Array.isArray(record.details)
+      ? (record.details as Record<string, unknown>)
+      : undefined;
+  const raw = normalizeMediaArtifact(record.media) ?? normalizeMediaArtifact(details?.media);
   if (!raw) {
     return undefined;
   }
