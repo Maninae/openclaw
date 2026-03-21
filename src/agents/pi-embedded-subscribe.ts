@@ -473,6 +473,20 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     return output;
   };
 
+  /** Drain all pending media artifacts and clear the buffer. */
+  const drainPendingMediaArtifacts = (): { mediaUrls: string[]; audioAsVoice: boolean } => {
+    const mediaUrls: string[] = [];
+    let audioAsVoice = false;
+    for (const { artifact } of state.pendingMediaArtifacts) {
+      mediaUrls.push(...resolveMediaArtifactUrls(artifact));
+      if (artifact.audioAsVoice) {
+        audioAsVoice = true;
+      }
+    }
+    state.pendingMediaArtifacts.length = 0;
+    return { mediaUrls, audioAsVoice };
+  };
+
   const emitBlockChunk = (text: string) => {
     if (state.suppressBlockChunks) {
       return;
@@ -519,17 +533,10 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     } = splitResult;
 
     // Drain pending media artifacts from tool results and attach to this block reply.
-    const artifactMediaUrls: string[] = [];
-    let artifactAudioAsVoice = false;
-    if (state.pendingMediaArtifacts.length > 0) {
-      for (const { artifact } of state.pendingMediaArtifacts) {
-        artifactMediaUrls.push(...resolveMediaArtifactUrls(artifact));
-        if (artifact.audioAsVoice) {
-          artifactAudioAsVoice = true;
-        }
-      }
-      state.pendingMediaArtifacts.length = 0;
-    }
+    const { mediaUrls: artifactMediaUrls, audioAsVoice: artifactAudioAsVoice } =
+      state.pendingMediaArtifacts.length > 0
+        ? drainPendingMediaArtifacts()
+        : { mediaUrls: [], audioAsVoice: false };
 
     const mergedMediaUrls = [...(mediaUrls ?? []), ...artifactMediaUrls];
     const mergedAudioAsVoice = audioAsVoice || artifactAudioAsVoice;
@@ -569,15 +576,8 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     // replied with SILENT_REPLY_TOKEN and produced no block text), emit them as a
     // standalone media-only block reply so they still reach the user.
     if (state.pendingMediaArtifacts.length > 0) {
-      const artifactMediaUrls: string[] = [];
-      let artifactAudioAsVoice = false;
-      for (const { artifact } of state.pendingMediaArtifacts) {
-        artifactMediaUrls.push(...resolveMediaArtifactUrls(artifact));
-        if (artifact.audioAsVoice) {
-          artifactAudioAsVoice = true;
-        }
-      }
-      state.pendingMediaArtifacts.length = 0;
+      const { mediaUrls: artifactMediaUrls, audioAsVoice: artifactAudioAsVoice } =
+        drainPendingMediaArtifacts();
       if (artifactMediaUrls.length > 0 || artifactAudioAsVoice) {
         emitBlockReplySafely({
           mediaUrls: artifactMediaUrls.length > 0 ? artifactMediaUrls : undefined,
