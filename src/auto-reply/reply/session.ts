@@ -571,11 +571,13 @@ export async function initSessionState(params: {
   const sessionCtx: TemplateContext = {
     ...ctx,
     // Keep BodyStripped aligned with Body (best default for agent prompts).
+    // Body may include envelope metadata (e.g. timestamps from formatInboundEnvelope),
+    // so it takes priority over BodyForAgent (raw text without envelope).
     // RawBody is reserved for command/directive parsing and may omit context.
     BodyStripped: normalizeInboundTextNewlines(
       bodyStripped ??
-        ctx.BodyForAgent ??
         ctx.Body ??
+        ctx.BodyForAgent ??
         ctx.CommandBody ??
         ctx.RawBody ??
         ctx.BodyForCommands ??
